@@ -1,0 +1,1 @@
+[{"entity":"校 长","type":"校长","startIndex":2,"endIndex":3,"resolution":{"values":["校长"]}},{"entity":"校 长","type":"部门","startIndex":2,"endIndex":3,"resolution":{"values":["校长办公室"]}},{"entity":"交 大","type":"﻿学校","startIndex":0,"endIndex":1,"resolution":{"values":["上海交通大学"]}}]

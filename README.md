@@ -1,2 +1,2 @@
-# jiaoxiaotongfinal
-fina bot for bop2017
+# jiaoxiaotong
+bopbot 20170
