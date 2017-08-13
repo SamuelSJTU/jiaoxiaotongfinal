@@ -70,10 +70,10 @@ function SetAnswer(session,question){
             //console.log(JSON.stringify(data));
             // lastentity = '林忠钦';
             fs.writeFileSync(path.join(__dirname, './log.txt'),question+'\r\n',fileoptions);
-            if(!getClassRoom(question){
-                session.send(getClassRoom(question));
-                return;
-            }
+            // if(!getClassRoom(question){
+            //     session.send(getClassRoom(question));
+            //     return;
+            // }
             var entities = data.entities;
             console.log('All Entities',entities);
             //其中的内容应包含两个 entity的值与前后index用于唯一标示
