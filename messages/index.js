@@ -1,4 +1,4 @@
-/*-----------------------------------------------------------------------------
+﻿/*-----------------------------------------------------------------------------
 This template demonstrates how to use Waterfalls to collect input from a user using a sequence of steps.
 For a complete walkthrough of creating this type of bot see the article at
 https://aka.ms/abs-node-waterfall
@@ -21,7 +21,7 @@ var relationSet = ['职位','其他关系','学科','院长','校长','主任','
 var ParelationSet = ['书记'];
 // var useEmulator = (process.env.NODE_ENV == 'development');
 // console.log(useEmulator);
-var useEmulator = true;
+var useEmulator = false;
 var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
     appId: process.env['MicrosoftAppId'],
     appPassword: process.env['MicrosoftAppPassword'],
