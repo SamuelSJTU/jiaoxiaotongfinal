@@ -9,18 +9,19 @@ https://aka.ms/abs-node-waterfall
 var builder = require("botbuilder");
 var botbuilder_azure = require("botbuilder-azure");
 var path = require('path');
-var TypeApi = 'https://southeastasia.api.cognitive.microsoft.com/luis/v2.0/apps/0b51b9e7-2200-40c5-9a7d-d644b430364e?subscription-key=fc7f3816353045959d517198742e11e3&timezoneOffset=0&verbose=true&q=';
+
 var fs = require('fs');
 var myutils = require('./myutils.js');
-var myutils2 = require('./myutils2.js');
 var luis = require('./luis_api.js');
+var read = require('./read.js');
 var fileoptions = {flag:'a'};
-var cards = require('./cards.js');
-var myio = require('./myIO.js');
-var GAS = require('./getAnswerSync');
-var QBH = require('./QB_api.js');
-var useEmulator = (process.env.NODE_ENV == 'development');
-// var useEmulator = true;
+var dataset = read.readNewData();
+
+var relationSet = ['职位','其他关系','学科','院长','校长','主任','党委职位'];
+var ParelationSet = ['书记'];
+// var useEmulator = (process.env.NODE_ENV == 'development');
+// console.log(useEmulator);
+var useEmulator = true;
 var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
     appId: process.env['MicrosoftAppId'],
     appPassword: process.env['MicrosoftAppPassword'],
@@ -30,131 +31,14 @@ var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure
 //var connector = new builder.ConsoleConnector().listen();  // 使用控制台进行测试
 var bot = new builder.UniversalBot(connector);
 bot.localePath(path.join(__dirname, './locale'));
-// 将上一个问题的结果保存下来，对不同的conversionid进行存储
-// 设置定时器，对每个conversionid加一个活跃度，每个一个小时加一，设置一个检查其活跃度的定时器，若10个小时不活跃，清除该用户上下午信息
-// 可以对id进行处理，比如添加一些头，从而设置不同活跃度权重，默认以socketid作为conversionid
-
-//var sl = require("./syncLuis.js");
-var dataset = myio.readNewData();
-var userInfo = new Array();
-var ga = require("./getAnswer.js");
+var lastentity = '';  //
+var lastquestionentity = '';
+var lastquestionrelation = '';
 bot.dialog('/', [
     function (session) {
         var question = session.message.text;
-        var userId = session.message.user.id;
-        if(userInfo[userId]==undefined) userInfo[userId] = new Array();
-        var question_temp = question.split("#");
-        userInfo[userId]['speakerName']='未知';
-        if(question_temp.length>1){
-            if(question_temp[1]!='未知'){
-                userInfo[userId]['speakerName'] = question_temp[1];
-            }
-        }
-        question = question_temp[0];
-        var q_type = question.substring(0,4);
-        if(q_type=='card'){
-            for(var i=0;i<cards.cardsName.length;i++){
-                 if(cards.cardsName[i]=='cardBing') continue;
-                 var msg = cards.createCards[cards.cardsName[i]](session); 
-                 session.send(msg);
-            }
-            return;
-        }
-        if(q_type=='demo'){
-            QBH.askQnAMakerDemo(question,function(answers){
-                var answer = answers[0].answer;
-                if(answer=='No good match found in the KB')
-                {
-                     QBH.askBing(question,function(webPages){
-                        var msg = cards.createCards["cardBing"](session,webPages); 
-                        session.send(msg);
-                     });
-                    return
-                }
-                console.log(answer)
-                 if(cards.isCard(answer)){
-                        var msg = cards.createCards[answer](session); 
-                        session.send(msg);
-                 }else if(answer=='From:上海交通大学闵行校区李政道图书馆;To:上海交通大学闵行校区软件学院'){
-                    session.send(answer);
-                    session.send('软件学院与李政道图书馆距离较远，建议乘坐校车！');
-                 }else if(answer=='我不知道'){
-                     session.send(answer);
-                     QBH.askBing(question,function(webPages){
-                        var msg = cards.createCards["cardBing"](session,webPages); 
-                        session.send(msg);
-                     });
-                 }else{
-                     session.send(answer);
-                 }
-            });
-            return;
-        }
-        if(ga.isHalfPhase(userInfo[userId]['PromptStatus'])){    //如果当前处于一半处问答
-            var qentitiesold = userInfo[userId]['LastEntities'];
-            var qrelation = userInfo[userId]['LastRelation'];
-            var PromptStatus = userInfo[userId]['PromptStatus'];
-            ga.getHalfAnswer(question,qentitiesold,qrelation,PromptStatus,
-            function(answer){
-                //问课程的回掉
-                session.send(answer)
-            },
-            function(answer){
-                //问路程的回掉
-                session.send(answer)
-            });
-
-            userInfo[userId]['PromptStatus'] = 'Complete';
-            userInfo[userId]['LastRelation'] = '';
-            userInfo[userId]['LastEntities'] = '';
-
-        }else{
-             ga.getAnswer(question,dataset,
-                function(answer,qentities){
-                    if(answer == 'LackInfoPath'){
-
-                        userInfo[userId]['PromptStatus'] = 'PathHalf';
-                        userInfo[userId]['LastEntities'] = qentities;
-                        session.send('please complete your Path info~');
-                    }else{
-                         session.send(answer);
-                    }
-                },
-                function(answer,qentities){
-                    // var answer = "cardShuttle";
-                    if(cards.isCard(answer)){
-                        var msg = cards.createCards[answer](session);  // 返回card生成的msg
-                        session.send(msg);
-                    }else if(answer == 'i dont know'){
-                        QBH.askBing(question,function(webPages){
-                            var msg = cards.createCards["cardBing"](session,webPages); 
-                            session.send(msg);
-                        });                  
-                    }else{
-                        session.send(answer);
-                    }
-                    // userInfo[userId]['LastAnswer'] = answer;
-                    // userInfo[userId]['PromptStatus'] = 'LessonHalf';
-                    // userInfo[userId]['LastEntities'] = qentities;
-                },
-                function(answer,qentities,qrelation){
-                    //AskLessonCallBack
-                    console.log(answer,qentities,qrelation);
-                    if(answer == 'LackInfoLesson'){
-                        userInfo[userId]['PromptStatus'] = 'LessonHalf';
-                        userInfo[userId]['LastEntities'] = qentities;
-                        userInfo[userId]['LastRelation'] = qrelation;
-                        session.send('please complete your lesson info~');
-                    }else{
-                        session.send(answer);
-                    }
-                },
-                function(answer){
-                    session.send(answer);
-                }
-            );
-        }
-       
+        if(!question) question = '一个输入错误';  // 设置非空
+        else SetAnswer(session,question);
     }
 ]);
 
@@ -169,23 +53,106 @@ if (useEmulator) {
     module.exports = { default: connector.listen() }
 }
 
+function SetAnswer(session,question){
+    luis.askLuisType(question,function(data){
+        var qintent = data.topScoringIntent==undefined  ? '' : data.topScoringIntent.intent;
+        luis.askLuis(question,function(data){  // 自己定义回调处理json，类似这种方式
+            //console.log(JSON.stringify(data));
+            // lastentity = '林忠钦';
+            fs.writeFileSync(path.join(__dirname, './log.txt'),question+'\r\n',fileoptions);
+            var entities = data.entities;
+            
+            //其中的内容应包含两个 entity的值与前后index用于唯一标示
+            var QuestionTriples = getQuestionTriples(entities);
+            
+            var qrelations = QuestionTriples[1];
+            var qentities = QuestionTriples[0];
+            var qdescriptions = QuestionTriples[2];
 
+            qentities = myutils.unique(qentities); 
+            qentities = deleteSJTU(qentities,qintent);
+            // console.log('qe',qentities);
+            if(qentities!=undefined && qentities[0]!=undefined &&　qentities[0][0]!=undefined) lastquestionentity = qentities;
+            if(qrelations!=undefined && qrelations[0]!=undefined && qrelations[0][0]!=undefined) lastquestionrelation = qrelations[0][0];
+            qrelations = myutils.unique(qrelations);
+            qdescriptions = myutils.unique(qdescriptions);
 
+            var qall = qentities.concat(qrelations).concat(qdescriptions);
+            qentities = myutils.removeSmallEntity(qentities,qall);
+            qrelations = myutils.removeSmallEntity(qrelations,qall);
+            qdescriptions = myutils.removeSmallEntity(qdescriptions,qall);
 
+            console.log('关系=',qrelations,'实体=',qentities,'描述=',qdescriptions,'意图=',qintent)
+            console.log('All Entities',entities);
 
-// function deleteSJTU(entities,intent){
-//     if(intent == 'AskIf'){
-//         if(entities.length>=3) return myutils.removeSJTU(entities);
-//         else return entities;
-//     }else{
-//         if(entities.length>=2)  return myutils.removeSJTU(entities);
-//         else return entities;
-//     }
-// }
+            var answer = myutils.process('','',qrelations,qentities,qdescriptions,qintent,dataset,question);
+            if(answer == 'i dont know') answer = myutils.process(lastentity,'',qrelations,qentities,qdescriptions,qintent,dataset); //最开始的问法
+            if(answer == 'i dont know'){
+                qentities = qentities.concat(lastquestionentity);
+                qentities = deleteSJTU(qentities);
+                answer = myutils.process('',lastquestionrelation,qrelations,qentities,qdescriptions,qintent,dataset); //若把上次的实体全部加入
+            } 
+            if(answer == 'i dont know') answer = myutils.process('上海交通大学','',qrelations,qentities,qdescriptions,qintent,dataset);
+            var prelation = getParentRelation(entities);
+            if(answer == 'i dont know' && prelation!="") answer = myutils.process('',prelation,qrelations,qentities,qdescriptions,qintent,dataset);
 
-// function saveUserInfo(userId,question){
-//     userInfo[userId]['question'] = question;
-// }
+            if(answer == '是' || answer == '不是'){
+                lastentity = qentities[0][0];
+            }else if(answer == ''){
+                lastentity = '';
+            }else{
+                lastentity = answer;
+            }
+            console.log('answer= '+ answer);
+            // fs.writeFileSync(respath,no+'\t'+answer+'\t'+question+'\t'+trueanswer+'\t'+'\r\n',fileoptions);
+            // fs.writeFileSync('./entities.txt',no+'\t'+qdescriptions.toString()+'\r\n',fileoptions);
+            session.send(answer);
+        });
+    });
+    
+}
+function deleteSJTU(entities,intent){
+    if(intent == 'AskIf'){
+        if(entities.length>=3) return myutils.removeSJTU(entities);
+        else return entities;
+    }else{
+        if(entities.length>=2)  return myutils.removeSJTU(entities);
+        else return entities;
+    }
 
+}
 
+function getQuestionTriples(entities){
+		var qrelations = new Array();
+		var qentities = new Array();
+		var qdescriptions = new Array();
+		for(var i in entities){
+			var entity = entities[i];
+			var val = entity['resolution']['values']==undefined ? entity['resolution']['value'] : entity['resolution']['values'][0];
+			var si = entity.startIndex;
+			var ei = entity.endIndex;
+			if(relationSet.indexOf(entity['type'])!=-1){
+				qrelations.push([val,si,ei]);
+			}else if(entity['type']=='定语' || entity['type']=='builtin.number'){
+				qdescriptions.push([val,si,ei]);
+			}else{
+				qentities.push([val,si,ei]);
+			}
+		}
+		qentities = myutils.unique(qentities); 
+		qrelations = myutils.unique(qrelations);
+		qdescriptions = myutils.unique(qdescriptions);
+		return [qentities,qrelations,qdescriptions];
+	}
 
+function getParentRelation(entities){
+    var res = [];
+    for(var i in entities){
+        var entity = entities[i];
+		var val = entity['resolution']['values']==undefined ? entity['resolution']['value'] : entity['resolution']['values'][0];
+        var prelation = entity.type;
+        if(ParelationSet.indexOf(prelation)!=-1) return prelation;
+    }
+    return "";
+
+}
