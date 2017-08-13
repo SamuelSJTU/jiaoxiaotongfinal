@@ -1,4 +1,4 @@
-var relationSet = ['职位','其他关系','学科','院长','校长','主任','党委职位','生活关系'];
+﻿var relationSet = ['职位','其他关系','学科','院长','校长','主任','党委职位','生活关系'];
 var ParelationSet = ['书记'];
 var read = require('./read.js');
 var luis = require('./luis_api.js');
@@ -60,7 +60,7 @@ function getParentRelation(entities){
 }
 
 
-var questions = ['交大有多少食堂'];
+var questions = ['交大能力寄快递'];
 for(var i in questions){
 	read.write(questions[i]);
 	read.write(": ");
