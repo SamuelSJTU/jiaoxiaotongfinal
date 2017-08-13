@@ -2,7 +2,7 @@ var relationSet = ['职位','其他关系','学科','院长','校长','主任','
 var ParelationSet = ['书记'];
 var read = require('./read.js');
 var luis = require('./luis_api.js');
-var question = '贵校以哪句话为校训？';
+var question = '交大有多少两院院士';
 var fs = require('fs');
 var path = require('path');
 var myutils = require('./myutils.js');
@@ -60,7 +60,7 @@ function getParentRelation(entities){
 }
 
 
-var questions = ['党委办公室网址是多少？'];
+var questions = ['交大多少食堂'];
 for(var i in questions){
 	read.write(questions[i]);
 	read.write(": ");

@@ -123,7 +123,7 @@ module.exports = {
 		var descriptions=[];
 		if(tags!=undefined){
 			if(tags.indexOf('默认')>=0) score+=0.5;
-			if(qrelation == '数量') score*=0.8;
+			if(qrelation == '数量') score-=0.55;
 		}
 		for (i in qdescriptions){
 			if(tags!=undefined){
