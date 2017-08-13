@@ -110,7 +110,7 @@ function SetAnswer(session,question){
             var prelation = getParentRelation(entities);
             if(answer == 'i dont know' && prelation!="") answer = myutils.process('',prelation,qrelations,qentities,qdescriptions,qintent,dataset);
             if(answer == 'i dont know'){
-                QBA.askQnAMaker('讲个笑话',function(argument) {
+                QBA.askQnAMaker(question,function(argument) {
                 // body...
                 session.send(argument);
                 });
