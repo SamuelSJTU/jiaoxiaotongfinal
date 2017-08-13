@@ -60,7 +60,7 @@ function getParentRelation(entities){
 }
 
 
-var questions = ['总务处电话'];
+var questions = ['交大有多少食堂'];
 for(var i in questions){
 	read.write(questions[i]);
 	read.write(": ");
