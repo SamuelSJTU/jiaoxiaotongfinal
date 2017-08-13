@@ -17,11 +17,11 @@ var read = require('./read.js');
 var fileoptions = {flag:'a'};
 var dataset = read.readNewData();
 
-var relationSet = ['职位','其他关系','学科','院长','校长','主任','党委职位'];
+var relationSet = ['职位','其他关系','学科','院长','校长','主任','党委职位','生活关系'];
 var ParelationSet = ['书记'];
 // var useEmulator = (process.env.NODE_ENV == 'development');
 // console.log(useEmulator);
-var useEmulator = false;
+var useEmulator = true
 var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
     appId: process.env['MicrosoftAppId'],
     appPassword: process.env['MicrosoftAppPassword'],
@@ -61,7 +61,7 @@ function SetAnswer(session,question){
             // lastentity = '林忠钦';
             fs.writeFileSync(path.join(__dirname, './log.txt'),question+'\r\n',fileoptions);
             var entities = data.entities;
-            
+            console.log('All Entities',entities);
             //其中的内容应包含两个 entity的值与前后index用于唯一标示
             var QuestionTriples = getQuestionTriples(entities);
             

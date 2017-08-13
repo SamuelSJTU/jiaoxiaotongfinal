@@ -32,7 +32,7 @@ module.exports = {
 			for(var i in dataset){
 				var kb = dataset[i];
 				//找到所有单描述的
-				var tags = kb.slice(3,kb.length);
+				var tags = kb[3];
 				if(qentities.length==1){
 					if((qentities[0]==kb[0] || qentities[0]==kb[2]) && this.isChildSet(puredes,tags)){
 						answer = true;
@@ -121,12 +121,16 @@ module.exports = {
 	getDescriptionScore:function(qdescriptions,tags){
 		var score=0;
 		var descriptions=[];
-		if(tags.indexOf('默认')>=0) score+=0.5;
+		if(tags!=undefined){
+			if(tags.indexOf('默认')>=0) score+=0.5;
+		}
 		for (i in qdescriptions){
-			if(tags.indexOf(qdescriptions[i])>=0){
-				score+=1;
-				descriptions.push(qdescriptions[i]);
-			} 
+			if(tags!=undefined){
+				if(tags.indexOf(qdescriptions[i])>=0){
+					score+=1;
+					descriptions.push(qdescriptions[i]);
+				}
+			}
 		}
 		return [score,descriptions];
 	},
@@ -138,20 +142,19 @@ module.exports = {
 		var argmaxdes=[];
 		for(var i in dataset){
 	        var kb = dataset[i];
-	        // console.log(kb);
-	        // var tags = kb.slice(3,kb.length);  //slice为获得子数组
-	        tags = kb[3];   //对于新版本 kb[3]已经为数组
-	        if(qentity == kb[0] && qrelation == kb[1]){ //匹配到了起始entity与relationship相同的      		
-	        	var score = this.getDescriptionScore(qdescriptions,tags)[0];
-	        	var descriptions = this.getDescriptionScore(qdescriptions,tags)[1];
-	            // console.log('该行知识得分: '+score);
-	            if(score>maxscore){
-	                maxscore = score; maxanswernum = i;argmaxdes=descriptions;
-	            }
-	        }
+	        tags = kb[3];   //对于新版本 kb[3]已经为数组 现在有时候会没定义
+			if(qentity == kb[0] && qrelation == kb[1]){ //匹配到了起始entity与relationship相同的      		
+				var score = this.getDescriptionScore(qdescriptions,tags)[0];
+				var descriptions = this.getDescriptionScore(qdescriptions,tags)[1];
+					// console.log('该行知识得分: '+score);
+				if(score>maxscore){
+						maxscore = score; maxanswernum = i;argmaxdes=descriptions;
+				}
+			}	
         }
        	var answer = dataset[maxanswernum][2];
        	if(maxscore==-1){
+			   
        		res.push('i dont know');res.push(maxscore);
        	}else res.push(answer);res.push(maxscore);res.push(qentity);res.push(qrelation);res.push(argmaxdes);
        	return res;

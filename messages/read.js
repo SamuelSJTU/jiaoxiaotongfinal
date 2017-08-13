@@ -13,7 +13,7 @@ module.exports = {
 		for(var i in datas){
 			datas[i] = datas[i].split("\t\t");
 			for(var j in datas[i]){
-				if(j == datas[i].length-1){
+				if(j == 3){
 					datas[i][j] = datas[i][j].split("\t");
 					for(var k in datas[i][j]){
 						datas[i][j][k] = getContent(datas[i][j][k])
