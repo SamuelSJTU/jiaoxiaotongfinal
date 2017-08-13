@@ -16,12 +16,12 @@ var luis = require('./luis_api.js');
 var read = require('./read.js');
 var fileoptions = {flag:'a'};
 var dataset = read.readNewData();
-
+var QBA = require("./QB_api.js");
 var relationSet = ['职位','其他关系','学科','院长','校长','主任','党委职位','生活关系'];
 var ParelationSet = ['书记'];
 // var useEmulator = (process.env.NODE_ENV == 'development');
 // console.log(useEmulator);
-var useEmulator = true
+var useEmulator = false
 var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
     appId: process.env['MicrosoftAppId'],
     appPassword: process.env['MicrosoftAppPassword'],
@@ -53,6 +53,16 @@ if (useEmulator) {
     module.exports = { default: connector.listen() }
 }
 
+
+function getClassRoom(question){
+    if((question.indexOf('课')!=-1 && question.indexOf('教室')!=-1) 
+        || (question.indexOf('课')!=-1 && question.indexOf('哪')!=-1)
+        || (question.indexOf('哪里上')!=-1)){
+        return '在东上院1'+parseInt(Math.random()*10+10);
+    }
+    else return false;
+}
+
 function SetAnswer(session,question){
     luis.askLuisType(question,function(data){
         var qintent = data.topScoringIntent==undefined  ? '' : data.topScoringIntent.intent;
@@ -60,6 +70,10 @@ function SetAnswer(session,question){
             //console.log(JSON.stringify(data));
             // lastentity = '林忠钦';
             fs.writeFileSync(path.join(__dirname, './log.txt'),question+'\r\n',fileoptions);
+            if(!getClassRoom(question){
+                session.send(getClassRoom(question));
+                return;
+            }
             var entities = data.entities;
             console.log('All Entities',entities);
             //其中的内容应包含两个 entity的值与前后index用于唯一标示
@@ -95,7 +109,14 @@ function SetAnswer(session,question){
             if(answer == 'i dont know') answer = myutils.process('上海交通大学','',qrelations,qentities,qdescriptions,qintent,dataset);
             var prelation = getParentRelation(entities);
             if(answer == 'i dont know' && prelation!="") answer = myutils.process('',prelation,qrelations,qentities,qdescriptions,qintent,dataset);
-
+            if(answer == 'i dont know'){
+                QBA.askQnAMaker('讲个笑话',function(argument) {
+                // body...
+                session.send(argument);
+                });
+            }else{
+                session.send(answer);
+            }
             if(answer == '是' || answer == '不是'){
                 lastentity = qentities[0][0];
             }else if(answer == ''){
@@ -106,7 +127,7 @@ function SetAnswer(session,question){
             console.log('answer= '+ answer);
             // fs.writeFileSync(respath,no+'\t'+answer+'\t'+question+'\t'+trueanswer+'\t'+'\r\n',fileoptions);
             // fs.writeFileSync('./entities.txt',no+'\t'+qdescriptions.toString()+'\r\n',fileoptions);
-            session.send(answer);
+            // session.send(answer);
         });
     });
     
@@ -133,7 +154,7 @@ function getQuestionTriples(entities){
 			var ei = entity.endIndex;
 			if(relationSet.indexOf(entity['type'])!=-1){
 				qrelations.push([val,si,ei]);
-			}else if(entity['type']=='定语' || entity['type']=='builtin.number'){
+			}else if(entity['type']=='其他定语' || entity['type']=='builtin.number'){
 				qdescriptions.push([val,si,ei]);
 			}else{
 				qentities.push([val,si,ei]);

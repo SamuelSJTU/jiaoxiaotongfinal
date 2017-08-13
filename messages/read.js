@@ -24,5 +24,11 @@ module.exports = {
 			}
 		}
 		return datas;
+	},
+	write:function(data){
+		rf.appendFile(path.join(__dirname, './log.txt'),data+'\r\n',function(err){
+			if(err) console.log(path+'\t'+'Writing Fail...')
+			else console.log(path+'\t'+'Writing Success...')
+		})
 	}
 }

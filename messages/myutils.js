@@ -118,11 +118,12 @@ module.exports = {
 		}
 		//return answer;
 	},
-	getDescriptionScore:function(qdescriptions,tags){
+	getDescriptionScore:function(qdescriptions,tags,qrelation){
 		var score=0;
 		var descriptions=[];
 		if(tags!=undefined){
 			if(tags.indexOf('默认')>=0) score+=0.5;
+			if(qrelation == '数量') score*=0.8;
 		}
 		for (i in qdescriptions){
 			if(tags!=undefined){
@@ -144,8 +145,8 @@ module.exports = {
 	        var kb = dataset[i];
 	        tags = kb[3];   //对于新版本 kb[3]已经为数组 现在有时候会没定义
 			if(qentity == kb[0] && qrelation == kb[1]){ //匹配到了起始entity与relationship相同的      		
-				var score = this.getDescriptionScore(qdescriptions,tags)[0];
-				var descriptions = this.getDescriptionScore(qdescriptions,tags)[1];
+				var score = this.getDescriptionScore(qdescriptions,tags,qrelation)[0];
+				var descriptions = this.getDescriptionScore(qdescriptions,tags,qrelation)[1];
 					// console.log('该行知识得分: '+score);
 				if(score>maxscore){
 						maxscore = score; maxanswernum = i;argmaxdes=descriptions;
