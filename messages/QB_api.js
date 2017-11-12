@@ -14,7 +14,7 @@ var request = require('request');
  */
 function askBing(query,callback)
 {   // 5.0 版本， 7.0版本需购买
-    var path = '/bing/v5.0/search?q='
+    var path = '/bing/v7.0/search?q='
         + querystring.escape(query);
     var request_timer =null, request = null; 
     // 设置请求定时器，请求10秒超时
@@ -30,7 +30,7 @@ function askBing(query,callback)
         method: 'GET',  // 请求方法
         headers: {'user-agent':'node.js',
                 'Content-Type':'application/json',
-                'Ocp-Apim-Subscription-Key':'98d17d3113564921b2bc843616f0994e'}
+                'Ocp-Apim-Subscription-Key':'22b4fea76ed74567b1a0ee348bfb89d4'}
           
     };
     var request = https.request(options,function(response){
@@ -39,7 +39,7 @@ function askBing(query,callback)
         var data = '';  // 定义函数局部变量
         response.on('data',function(chunk){ data += chunk;});  // 获取request得到的数据
         response.on('end',function(){
-            //console.log('打印接收到的json文本\n',data);
+            //console.log('打印接收到的json文本\n',data);is
 
             // callback(JSON.parse(data));  // 响应结束调用callback函数,为自己输入的函数句柄
              var jdata = JSON.parse(data);
@@ -82,11 +82,11 @@ askQnAMaker=function(question,callback){
         'top':1  // 返回的长度
     };    
     var requestData = {
-        url: "https://westus.api.cognitive.microsoft.com/qnamaker/v2.0/knowledgebases/1592c3cf-fe30-4ac8-8f3b-43f899265e9c/generateAnswer",
+        url: "https://westus.api.cognitive.microsoft.com/qnamaker/v2.0/knowledgebases/f73202ac-2453-4062-8ae0-8f8d1c625025/generateAnswer",
         method: "POST",
         headers: {
             "content-type": "application/json",
-            "Ocp-Apim-Subscription-Key": "84ba2e0f445747d6baa1b1cc3c6118fc" 
+            "Ocp-Apim-Subscription-Key": "bdd9ab5fb7194f9dbf39803385ac58b0" 
         },
         body: JSON.stringify(requestBody)
     };

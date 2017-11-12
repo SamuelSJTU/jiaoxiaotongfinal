@@ -19,9 +19,9 @@ var dataset = read.readNewData();
 var QBA = require("./QB_api.js");
 var relationSet = ['职位','其他关系','学科','院长','校长','主任','党委职位','生活关系'];
 var ParelationSet = ['书记'];
-// var useEmulator = (process.env.NODE_ENV == 'development');
-// console.log(useEmulator);
-var useEmulator = false
+var useEmulator = (process.env.NODE_ENV == 'development');
+console.log(useEmulator);
+// var useEmulator = false
 var connector = useEmulator ? new builder.ChatConnector() : new botbuilder_azure.BotServiceConnector({
     appId: process.env['MicrosoftAppId'],
     appPassword: process.env['MicrosoftAppPassword'],
@@ -98,33 +98,34 @@ function SetAnswer(session,question){
 
             console.log('关系=',qrelations,'实体=',qentities,'描述=',qdescriptions,'意图=',qintent)
             console.log('All Entities',entities);
-
-            var answer = myutils.process('','',qrelations,qentities,qdescriptions,qintent,dataset,question);
-            if(answer == 'i dont know') answer = myutils.process(lastentity,'',qrelations,qentities,qdescriptions,qintent,dataset); //最开始的问法
-            if(answer == 'i dont know'){
-                qentities = qentities.concat(lastquestionentity);
-                qentities = deleteSJTU(qentities);
-                answer = myutils.process('',lastquestionrelation,qrelations,qentities,qdescriptions,qintent,dataset); //若把上次的实体全部加入
-            } 
-            if(answer == 'i dont know') answer = myutils.process('上海交通大学','',qrelations,qentities,qdescriptions,qintent,dataset);
-            var prelation = getParentRelation(entities);
-            if(answer == 'i dont know' && prelation!="") answer = myutils.process('',prelation,qrelations,qentities,qdescriptions,qintent,dataset);
-            if(answer == 'i dont know'){
-                QBA.askQnAMaker(question,function(argument) {
+            QBA.askQnAMaker(question,function(argument) {
                 // body...
-                session.send(argument);
+                if(argument!="No good match found in the KB"){
+                    session.send(argument);
+                }
+                else{
+                    var answer = myutils.process('','',qrelations,qentities,qdescriptions,qintent,dataset,question);
+                    if(answer == 'i dont know') answer = myutils.process(lastentity,'',qrelations,qentities,qdescriptions,qintent,dataset); //最开始的问法
+                    if(answer == 'i dont know'){
+                        qentities = qentities.concat(lastquestionentity);
+                        qentities = deleteSJTU(qentities);
+                        answer = myutils.process('',lastquestionrelation,qrelations,qentities,qdescriptions,qintent,dataset); //若把上次的实体全部加入
+                    } 
+                    if(answer == 'i dont know') answer = myutils.process('上海交通大学','',qrelations,qentities,qdescriptions,qintent,dataset);
+                    var prelation = getParentRelation(entities);
+                    if(answer == 'i dont know' && prelation!="") answer = myutils.process('',prelation,qrelations,qentities,qdescriptions,qintent,dataset);
+                    
+                    session.send(answer);
+                    if(answer == '是' || answer == '不是'){
+                        lastentity = qentities[0][0];
+                    }else if(answer == ''){
+                        lastentity = '';
+                    }else{
+                        lastentity = answer;
+                    }
+                    console.log('answer= '+ answer);
+                }
                 });
-            }else{
-                session.send(answer);
-            }
-            if(answer == '是' || answer == '不是'){
-                lastentity = qentities[0][0];
-            }else if(answer == ''){
-                lastentity = '';
-            }else{
-                lastentity = answer;
-            }
-            console.log('answer= '+ answer);
             // fs.writeFileSync(respath,no+'\t'+answer+'\t'+question+'\t'+trueanswer+'\t'+'\r\n',fileoptions);
             // fs.writeFileSync('./entities.txt',no+'\t'+qdescriptions.toString()+'\r\n',fileoptions);
             // session.send(answer);
